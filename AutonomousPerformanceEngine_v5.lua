@@ -46,9 +46,6 @@ bootLabel.Text = "APE — Initializing..."
 bootLabel.Parent = bootGui
 Instance.new("UICorner", bootLabel).CornerRadius = UDim.new(0, 10)
 
---=============================================================
--- CONFIG
---=============================================================
 local CONFIG = {
 	SampleWindow = 0.5,
 	HistoryLength = 60,
@@ -66,15 +63,15 @@ local CONFIG = {
 	DefaultAutoOptimize = true,
 
 	
-	DecisionInterval = 2,      -- seconds between normal decision ticks
-	SettleTime = 1.5,          -- seconds to wait before measuring an action's effect
-	MaxBatch = 5,              -- max objects touched per action (keeps attribution clean)
-	LearnAlpha = 0.4,          -- EMA weight for updating learned impact per object
-	SpikeDecayInterval = 30,   -- seconds between halving spike-association scores
+	DecisionInterval = 2,      
+	SettleTime = 1.5,          
+	MaxBatch = 5,              
+	LearnAlpha = 0.4,          
+	SpikeDecayInterval = 30,   
 	SpikeDecayFactor = 0.5,
-	JitterSpikyThreshold = 12, -- ms jitter above which we call conditions "spiky"
+	JitterSpikyThreshold = 12, 
 
-	-- v4 causal experiment settings
+	
 	ExperimentBatch = 1,
 	BaselineSamples = 4,
 	SettleSamples = 4,
@@ -87,9 +84,7 @@ local CONFIG = {
 	RestoreTestEnabled = true,
 }
 
---=============================================================
--- STATE
---=============================================================
+
 local state = {
 	fps = 60,
 	smoothedFPS = 60,
@@ -1007,9 +1002,6 @@ floatStatus.Parent = float
 float.MouseEnter:Connect(function() tween(floatStroke, {Transparency = 0}, 0.12) end)
 float.MouseLeave:Connect(function() tween(floatStroke, {Transparency = 0.2}, 0.18) end)
 
---=============================================================
--- Dashboard shell
---=============================================================
 local panel = Instance.new("Frame")
 panel.Name = "Dashboard"
 panel.AnchorPoint = Vector2.new(1, 0.5)
@@ -1037,7 +1029,6 @@ topGlow.Parent = panel
 corner(topGlow, 2)
 gradient(topGlow, ACCENT, ACCENT_2, 0)
 
--- Header ---------------------------------------------------------------
 local header = Instance.new("Frame")
 header.Size = UDim2.new(1, 0, 0, 58)
 header.BackgroundTransparency = 1
@@ -1058,7 +1049,7 @@ local title = label(header, {
 	position = UDim2.fromOffset(28, 8), uiSize = UDim2.new(1, -112, 0, 20),
 })
 local subtitle = label(header, {
-	text = "Adaptive • causal • client-side", font = FONT, size = 10, color = MUTED,
+	text = "By Syntax_errrror", font = FONT, size = 10, color = MUTED,
 	position = UDim2.fromOffset(28, 28), uiSize = UDim2.new(1, -112, 0, 16),
 })
 
@@ -1081,7 +1072,6 @@ end
 local compactBtn = headerIconButton("—", -78, 14)
 local closeBtn = headerIconButton("×", -40, 20)
 
--- Segmented tab bar ------------------------------------------------------
 local TAB_NAMES = {"Live", "Insights", "Log", "Settings"}
 local tabBar = Instance.new("Frame")
 tabBar.Size = UDim2.new(1, -28, 0, 34)
@@ -1116,7 +1106,6 @@ for i, name in ipairs(TAB_NAMES) do
 	tabButtons[i] = b
 end
 
--- Tab content host -------------------------------------------------------
 local tabHost = Instance.new("Frame")
 tabHost.Position = UDim2.fromOffset(0, 98)
 tabHost.Size = UDim2.new(1, 0, 1, -98)
@@ -1171,9 +1160,6 @@ local function sectionLabel(parent, text, order)
 	})
 end
 
---=============================================================
--- LIVE TAB
---=============================================================
 local livePage = pages[1]
 
 sectionLabel(livePage, "LIVE", 1)
@@ -1277,9 +1263,6 @@ local appliedLabel = label(appliedCard, {
 	position = UDim2.fromOffset(12, 0), uiSize = UDim2.new(1, -24, 1, 0),
 })
 
---=============================================================
--- INSIGHTS TAB
---=============================================================
 local insightsPage = pages[2]
 sectionLabel(insightsPage, "LEARNED FROM YOUR OWN FRAME TIME", 1)
 local insightsEmpty = label(insightsPage, {
@@ -1326,9 +1309,6 @@ for i = 1, INSIGHT_ROW_COUNT do
 	insightRows[i] = {row = row, name = nameLbl, sub = subLbl, impact = impactLbl, barFill = barFill, conf = confLbl}
 end
 
---=============================================================
--- LOG TAB
---=============================================================
 local logPage = pages[3]
 sectionLabel(logPage, "ACTIVITY", 1)
 local LOG_ROW_COUNT = 24
@@ -1355,9 +1335,6 @@ for i = 1, LOG_ROW_COUNT do
 	logRows[i] = {row = row, dot = dot, txt = txt}
 end
 
---=============================================================
--- SETTINGS TAB
---=============================================================
 local settingsPage = pages[4]
 
 sectionLabel(settingsPage, "TARGET FRAME RATE", 1)
@@ -1437,9 +1414,6 @@ local sessionPing = sessionTile(2, "PING MIN / AVG / MAX")
 local sessionEvents = sessionTile(3, "EVENTS / SESSION TIME")
 local sessionBands = sessionTile(4, "INTENSITY BANDS")
 
---=============================================================
--- Open/close + drag + compact + responsive sizing
---=============================================================
 local panelSizeFull = UDim2.fromOffset(380, 520)
 local currentPanelSize = panelSizeFull
 
@@ -1473,9 +1447,6 @@ compactBtn.MouseButton1Click:Connect(function()
 	panel.Size = state.compact and UDim2.fromOffset(currentPanelSize.X.Offset, 58) or currentPanelSize
 end)
 
--- Height/width are clamped against the *actual* usable screen space (camera
--- viewport minus the Roblox top-bar inset) so the dashboard can never render
--- partially off-screen the way it did in v4.
 local GuiService = game:GetService("GuiService")
 local function layoutResponsive()
 	local camera = Workspace.CurrentCamera
@@ -1523,9 +1494,6 @@ do
 	end)
 end
 
---=============================================================
--- UI REFRESH LOOP (display only — never touches game objects)
---=============================================================
 local function colorFor(health)
 	return health >= 75 and GOOD or health >= 45 and WARN or BAD
 end
@@ -1576,7 +1544,7 @@ task.spawn(function()
 		local health = computeHealthScore()
 		local healthColor = colorFor(health)
 
-		-- Floating pill
+		
 		iconLabel.Text = tostring(math.floor(state.smoothedFPS)) .. " FPS"
 		floatAccent.BackgroundColor3 = healthColor
 		floatStroke.Color = healthColor
@@ -1586,7 +1554,7 @@ task.spawn(function()
 			float.Position.X.Scale, float.Position.X.Offset,
 			float.Position.Y.Scale, float.Position.Y.Offset + 4)
 
-		-- Live tab
+		
 		fpsLabel.Text = ("%d"):format(math.floor(state.smoothedFPS))
 		fpsLabel.TextColor3 = healthColor
 		pingLabel.Text = ("%d ms"):format(math.floor(state.ping))
@@ -1617,7 +1585,7 @@ task.spawn(function()
 				or BAD
 		end
 
-		-- Settings tab / session
+	
 		local s = state.session
 		local elapsed = os.clock() - s.startClock
 		sessionFPS.Text = ("%d / %d / %d"):format(
@@ -1635,4 +1603,4 @@ task.spawn(function()
 	end
 end)
 
-addLog("Autonomous v5 started — causal experiments enabled (target " .. state.targetFPS .. " FPS)", "info")
+addLog("Engine Started Successfully (target " .. state.targetFPS .. " FPS)", "info")
