@@ -1,70 +1,3 @@
---[[
-	AUTONOMOUS ADAPTIVE PERFORMANCE ENGINE — Roblox LocalScript (v5)
-	==========================================================================
-	v5 changes over v4:
-
-	BUG FIXES (these were silently breaking things in v4):
-	- The activity log and A/B-test messages referenced `e.Name`, but `e` is
-	  the internal registry entry, not the Roblox instance — it has no
-	  `.Name` field. Every "Testing OFF <name>", "KEPT OFF <name>",
-	  "REVERTED <name>" line was printing "nil" instead of the object name.
-	  Fixed via a safe `entryName(e)` helper used everywhere.
-	- CONFIG had two `MinImprovementMs` keys (one from v3, one from v4); the
-	  second silently clobbered the first. Harmless numerically since both
-	  were 0.4, but it's exactly the kind of duplicate key that turns into a
-	  real bug the next time someone tunes one and not the other. Removed.
-	- The old UI reused the name `autoBtn` for two different buttons (the
-	  target-FPS "+" stepper and the auto-optimize toggle), reassigning it
-	  without `local`. It happened not to break anything because the first
-	  button's click connection had already captured its own instance, but
-	  it's a landmine. Every control now has its own name.
-	- The dashboard's two-column stat rows used hand-placed pixel offsets
-	  with no clipping or truncation, so longer strings (long ping/FPS
-	  stats) overlapped the neighboring column — visible in the screen
-	  recording as "58/60min/avg/max: 70/94/" overlapping text. Replaced
-	  with UIGridLayout / UIListLayout everywhere so Roblox handles spacing,
-	  plus TextTruncate on every value label.
-	- The dashboard could render partially off-screen top/bottom (also
-	  visible in the recording) because its height wasn't clamped against
-	  the actual viewport. It's now height-clamped and re-centered on every
-	  resize, and content is split into tabs so no single view is ever
-	  taller than the panel.
-
-	UI REDESIGN:
-	- One long scrolling stack of 8 cards -> four tabs (Live / Insights /
-	  Log / Settings) with a sliding segmented-control indicator, so each
-	  screen is short, focused, and fits on small phones without scrolling
-	  past the fold.
-	- Live tab: 2x2 metric grid (FPS / Health / Ping / Jitter), a redrawn
-	  FPS history chart with rounded bars and a target line, and status
-	  chips (diagnosis / intensity / experiment) that color themselves.
-	- Insights tab: real rows (name, confidence bar, measured impact)
-	  instead of one monospace text blob.
-	- Log tab: color-coded activity feed (green = kept/useful, red =
-	  reverted, amber = spike, gray = info).
-	- Settings tab: press-and-hold target FPS stepper, an animated
-	  toggle switch for auto-optimize, a one-tap "Restore everything now"
-	  button, and session stats.
-	- New floating pill: animated health ring color, tap to open, drag to
-	  reposition, plus small toast pop-ups for spikes/keeps so you get
-	  feedback without opening the panel.
-
-	Everything below the UI section (measurement, ranking, causal A/B
-	testing, learning) is functionally the same engine as v4 — only the
-	bugs above were fixed. Same honesty notes as always:
-	- Cannot lower ping. Ping is server round-trip time; measured/displayed
-	  only.
-	- Roblox exposes no real GPU profiler to scripts. The engine measures
-	  its own frame-time before/after each change and learns from that —
-	  a real signal (your own frame time), not a fabricated one.
-	- Client-side only. No gameplay advantage — it only disables/reduces
-	  visual effects (particles, trails, beams, fire, smoke, sparkles,
-	  post-processing, shadows, streaming radius).
-
-	PLACEMENT: LocalScript under StarterPlayerScripts (or StarterGui), in
-	a game you own/develop.
---]]
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -75,16 +8,15 @@ local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 if not player then
-	error("Autonomous Performance Engine: LocalPlayer is not available. Run after the game has loaded.")
+	error("Script Is Not Available Right Now. Run after the game has loaded.")
 end
 
 local playerGui = player:WaitForChild("PlayerGui", 15)
 if not playerGui then
-	error("Autonomous Performance Engine: PlayerGui was not available.")
+	error("Script: PlayerGui was not available.")
 end
 
--- UI host: PlayerGui is preferred for normal LocalScripts; executor environments
--- may expose gethui(), which is a more reliable client UI container there.
+
 local function getUIHost()
 	local host = playerGui
 	local ok, hui = pcall(function()
@@ -96,7 +28,7 @@ end
 local UIHost = getUIHost()
 
 local bootGui = Instance.new("ScreenGui")
-bootGui.Name = "AutonomousPerfBoot"
+bootGui.Name = "Autonomous Performance Engine"
 bootGui.ResetOnSpawn = false
 bootGui.IgnoreGuiInset = true
 bootGui.DisplayOrder = 1000000
@@ -133,7 +65,7 @@ local CONFIG = {
 	StreamingRadiusFloor = 128,
 	DefaultAutoOptimize = true,
 
-	-- v3 closed-loop decision settings
+	
 	DecisionInterval = 2,      -- seconds between normal decision ticks
 	SettleTime = 1.5,          -- seconds to wait before measuring an action's effect
 	MaxBatch = 5,              -- max objects touched per action (keeps attribution clean)
@@ -146,7 +78,7 @@ local CONFIG = {
 	ExperimentBatch = 1,
 	BaselineSamples = 4,
 	SettleSamples = 4,
-	MinImprovementMs = 0.4,   -- (was duplicated in v4; single source of truth now)
+	MinImprovementMs = 0.4,   
 	NoiseFloorMs = 0.25,
 	ConfidenceAlpha = 0.22,
 	MaxExperimentsPerObject = 8,
